@@ -60,7 +60,28 @@ namespace RBTree
 
         private void RectifySituationRedParentAndBlackUncle(Node<T> node)
         {
-            throw new NotImplementedException();
+            var parent = node.Parent;
+            if (node.Disposition == DispositionNode.Right)
+            {
+                RotateLeft(parent);
+                parent = node;
+            }
+
+            var grandParent = parent.Parent;
+            if (parent.Disposition == DispositionNode.Left)
+            {
+                RotateRight(node);
+            }
+            else
+            {
+                RotateLeft(node);
+            }
+            
+            grandParent = grandParent.Parent;
+            if (grandParent.IsRoot)
+            {
+                Root = grandParent;
+            }
         }
 
         private void RotateRight(Node<T> node)
