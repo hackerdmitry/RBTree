@@ -5,21 +5,21 @@ namespace RBTree
 {
     public class RBTree<T> where T : IComparable<T>
     {
-        public Node<T> Root { get; set; }
+        public Node<T> Root { get; set; } = CreateNil();
+        public int Count { get; set; }
 
-        public RBTree()
-        {
-            Root = null;
-        }
+        public RBTree() { }
 
         public RBTree(T initial)
         {
-            RefreshRootNode(initial);
+            Add(initial);
         }
 
         public void Add(T value)
         {
-            if (Root == null)
+            Count++;
+        
+            if (Root.IsNil)
             {
                 RefreshRootNode(value);
                 return;
@@ -32,14 +32,19 @@ namespace RBTree
                 curNode = newNode > curNode ? curNode.Right : curNode.Left;
             }
 
-            SetParent(newNode, curNode.Parent);
-            if (newNode.IsRedParentAndRedUncle())
+            newNode.Parent = curNode.Parent;
+            SaveIntegrityRBTree(newNode);
+        }
+
+        private void SaveIntegrityRBTree(Node<T> node)
+        {
+            if (node.IsRedParentAndRedUncle())
             {
-                RectifySituationRedParentAndRedUncle(newNode);
+                RectifySituationRedParentAndRedUncle(node);
             } 
-            else if (newNode.IsRedParentAndBlackUncle())
+            else if (node.IsRedParentAndBlackUncle())
             {
-                RectifySituationRedParentAndBlackUncle(newNode);
+                RectifySituationRedParentAndBlackUncle(node);
             }
         }
 
@@ -70,11 +75,11 @@ namespace RBTree
             var grandParent = parent.Parent;
             if (parent.Disposition == DispositionNode.Left)
             {
-                RotateRight(node);
+                RotateRight(grandParent);
             }
             else
             {
-                RotateLeft(node);
+                RotateLeft(grandParent);
             }
             
             grandParent = grandParent.Parent;
@@ -93,11 +98,7 @@ namespace RBTree
 
             node.Left = leftChildRightGrandson;
             node.Parent = leftChild;
-            leftChild.Right = node;
-            if (parent != null)
-            {
-                SetParent(leftChild, parent);
-            }
+            leftChild.Parent = parent;
             
             if (node.Color == NodeColor.Black && 
                 leftChild.Color == NodeColor.Red)
@@ -116,30 +117,13 @@ namespace RBTree
 
             node.Right = rightChildLeftGrandson;
             node.Parent = rightChild;
-            rightChild.Left = node;
-            if (parent != null)
-            {
-                SetParent(rightChild, parent);
-            }
+            rightChild.Parent = parent;
             
             if (node.Color == NodeColor.Black && 
                 rightChild.Color == NodeColor.Red)
             {
                 rightChild.ChangeColor();
                 node.ChangeColor();
-            }
-        }
-
-        private static void SetParent(Node<T> node, Node<T> parent)
-        {
-            node.Parent = parent;
-            if (node > parent)
-            {
-                parent.Right = node;
-            }
-            else
-            {
-                parent.Left = node;
             }
         }
 

@@ -8,3 +8,4 @@ namespace RBTree.Exceptions
             : base($"Узел со значением '{node.Value}' имеет ненормальные дочерние узлы") { }
     }
 }
+

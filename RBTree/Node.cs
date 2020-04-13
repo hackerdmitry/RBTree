@@ -1,10 +1,35 @@
 using System;
 using RBTree.Exceptions;
 
-namespace RBTree {
+namespace RBTree
+{
     public class Node<T> where T : IComparable<T>
     {
-        public Node<T> Parent { get; set; }
+        private static int id;
+        public int Id { get; }
+
+        private Node<T> _parent;
+        public Node<T> Parent
+        {
+            get => _parent;
+            set
+            {
+                _parent = value;
+                if (_parent != null)
+                {
+                    if (Disposition == DispositionNode.Left)
+                    {
+                        _parent._left = this;
+                    }
+                    else
+                    {
+                        _parent._right = this;
+                    }
+                }
+                
+            }
+        }
+        
         public Node<T> Uncle
         {
             get
@@ -14,7 +39,7 @@ namespace RBTree {
                 {
                     return null;
                 }
-                
+
                 parent.CheckChildNodes();
                 return Disposition == DispositionNode.Left
                            ? parent.Right
@@ -23,8 +48,27 @@ namespace RBTree {
         }
         public Node<T> GrandParent => Parent?.Parent;
 
-        public Node<T> Left { get; set; }
-        public Node<T> Right { get; set; }
+        private Node<T> _left;
+        public Node<T> Left
+        {
+            get => _left;
+            set
+            {
+                _left = value;
+                _left._parent = this;
+            }
+        }
+
+        private Node<T> _right;
+        public Node<T> Right
+        {
+            get => _right;
+            set
+            {
+                _right = value;
+                _right._parent = this;
+            }
+        }
 
         public NodeColor Color { get; set; }
         public DispositionNode? Disposition => Parent == null
@@ -38,6 +82,11 @@ namespace RBTree {
         public bool IsRoot => Parent == null;
         public bool IsNil => Left == null && Right == null;
 
+        public Node()
+        {
+            Id = id++;
+        }
+
         public void CheckChildNodes()
         {
             if (Left == null ^ Right == null)
@@ -45,18 +94,18 @@ namespace RBTree {
                 throw new NotNormalChildNodes<T>(this);
             }
         }
-        
+
         public bool IsRedParentAndRedUncle()
         {
-            return !IsRoot && 
-                   Parent.Color == NodeColor.Red && 
+            return !IsRoot &&
+                   Parent.Color == NodeColor.Red &&
                    Uncle.Color == NodeColor.Red;
         }
-        
+
         public bool IsRedParentAndBlackUncle()
         {
-            return !IsRoot && 
-                   Parent.Color == NodeColor.Red && 
+            return !IsRoot &&
+                   Parent.Color == NodeColor.Red &&
                    Uncle.Color == NodeColor.Black;
         }
 
@@ -77,6 +126,16 @@ namespace RBTree {
         public static bool operator <(Node<T> node1, Node<T> node2)
         {
             return node1.Value.CompareTo(node2.Value) < 0;
+        }
+
+        public override int GetHashCode()
+        {
+            return Id;
+        }
+
+        public override string ToString()
+        {
+            return $"[Node: {Value}|{$"{Color:F}"[0]}]";
         }
     }
 
