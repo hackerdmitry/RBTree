@@ -12,21 +12,7 @@ namespace RBTree
         public Node<T> Parent
         {
             get => _parent;
-            set
-            {
-                _parent = value;
-                if (_parent != null)
-                {
-                    if (Disposition == DispositionNode.Left)
-                    {
-                        _parent._left = this;
-                    }
-                    else
-                    {
-                        _parent._right = this;
-                    }
-                }
-            }
+            set => SetParent(value);
         }
 
         public Node<T> Uncle
@@ -70,6 +56,7 @@ namespace RBTree
         }
 
         public NodeColor Color { get; set; }
+        //BUG должен точно сравниваться по ID, а не просто кто больше, а кто меньше
         public DispositionNode? Disposition => Parent == null
                                                    ? (DispositionNode?) null
                                                    : this > Parent
@@ -84,6 +71,22 @@ namespace RBTree
         public Node()
         {
             Id = id++;
+        }
+
+        public void SetParent(Node<T> value, bool withInverted = true)
+        {
+            _parent = value;
+            if (_parent != null && withInverted)
+            {
+                if (Disposition == DispositionNode.Left)
+                {
+                    _parent._left = this;
+                }
+                else
+                {
+                    _parent._right = this;
+                }
+            }
         }
 
         public void CheckChildNodes()
@@ -126,6 +129,16 @@ namespace RBTree
         {
             return node1.Value.CompareTo(node2.Value) < 0;
         }
+
+        // public static bool operator ==(Node<T> node1, Node<T> node2)
+        // {
+        //     return node1.Value.CompareTo(node2.Value) == 0;
+        // }
+        //
+        // public static bool operator !=(Node<T> node1, Node<T> node2)
+        // {
+        //     return node1.Value.CompareTo(node2.Value) != 0;
+        // }
 
         public override int GetHashCode()
         {

@@ -15,10 +15,18 @@ namespace RBTree
             Add(initial);
         }
 
+        public RBTree(params T[] initial)
+        {
+            foreach (var value in initial)
+            {
+                Add(value);
+            }
+        }
+
         public void Add(T value)
         {
             Count++;
-        
+
             if (Root.IsNil)
             {
                 RefreshRootNode(value);
@@ -41,7 +49,7 @@ namespace RBTree
             if (node.IsRedParentAndRedUncle())
             {
                 RectifySituationRedParentAndRedUncle(node);
-            } 
+            }
             else if (node.IsRedParentAndBlackUncle())
             {
                 RectifySituationRedParentAndBlackUncle(node);
@@ -72,7 +80,7 @@ namespace RBTree
                 {
                     RotateRight(parent);
                 }
-                
+
                 parent = node;
             }
 
@@ -85,8 +93,10 @@ namespace RBTree
             {
                 RotateLeft(grandParent);
             }
-            
+
+            grandParent.Color = NodeColor.Red;
             grandParent = grandParent.Parent;
+            grandParent.Color = NodeColor.Black;
             if (grandParent.IsRoot)
             {
                 Root = grandParent;
@@ -103,12 +113,10 @@ namespace RBTree
             node.Left = leftChildRightGrandson;
             node.Parent = leftChild;
             leftChild.Parent = parent;
-            
-            if (node.Color == NodeColor.Black && 
-                leftChild.Color == NodeColor.Red)
+
+            if (leftChild.IsRoot)
             {
-                leftChild.ChangeColor();
-                node.ChangeColor();
+                Root = leftChild;
             }
         }
 
@@ -122,13 +130,244 @@ namespace RBTree
             node.Right = rightChildLeftGrandson;
             node.Parent = rightChild;
             rightChild.Parent = parent;
-            
-            if (node.Color == NodeColor.Black && 
-                rightChild.Color == NodeColor.Red)
+
+            if (rightChild.IsRoot)
             {
-                rightChild.ChangeColor();
-                node.ChangeColor();
+                Root = rightChild;
             }
+        }
+
+        public bool Remove(T value)
+        {
+            var deleteNode = Root;
+            // найдем узел с ключом value
+            while (deleteNode.Value.CompareTo(value) != 0 && !deleteNode.IsNil)
+            {
+                deleteNode = deleteNode.Value.CompareTo(value) < 0 ? deleteNode.Right : deleteNode.Left;
+            }
+
+            // не нашли? значит его нет!? не проблема! просто завершаем работу
+            if (deleteNode.IsNil)
+            {
+                return false;
+            }
+
+            Count--;
+            // !!!
+            var workNode = new Node<T>();
+            if (deleteNode.Left.IsNil || deleteNode.Right.IsNil)
+            {
+                workNode = deleteNode;
+            }
+            else
+            {
+                workNode = deleteNode.Right;
+                while (!workNode.Left.IsNil)
+                {
+                    workNode = workNode.Left;
+                }
+            }
+
+            var linkedNode = CreateNil();
+            linkedNode.SetParent(workNode.Parent, false);
+            if (workNode.Parent != null)
+            {
+                if (workNode == workNode.Parent.Left)
+                {
+                    workNode.Parent.Left = linkedNode;
+                }
+                else
+                {
+                    workNode.Parent.Right = linkedNode;
+                }
+            }
+            else
+            {
+                Root = linkedNode;
+            }
+
+            if (workNode != deleteNode)
+            {
+                deleteNode.Value = workNode.Value;
+            }
+
+            if (workNode.Color == NodeColor.Black)
+            {
+                BalanceTreeAfterDelete(linkedNode);
+            }
+
+            /*// если детей нет - все просто
+            if (deleteNode.Left.IsNil && deleteNode.Right.IsNil)
+            {
+                if (deleteNode.IsRoot)
+                {
+                    Root = CreateNil();
+                    return true;
+                }
+
+                var nil = CreateNil();
+                if (deleteNode.Disposition == DispositionNode.Left)
+                {
+                    deleteNode.Parent.Left = nil;
+                }
+                else
+                {
+                    deleteNode.Parent.Right = nil;
+                }
+
+                workNode = deleteNode.Parent;
+                deleteNode.Parent = CreateNil();
+            }
+            // если есть один ребенок то поменяем ссылку его родителя на родителя родителя
+            else if (deleteNode.Left.IsNil ^ deleteNode.Right.IsNil)
+            {
+                var child = deleteNode.Left.IsNil ? deleteNode.Right : deleteNode.Left;
+                if (deleteNode.IsRoot)
+                {
+                    Root = child;
+                }
+                child.Parent = deleteNode.Parent;
+                workNode = child;
+            }
+            else
+            {
+                workNode = deleteNode.Right;
+                while (!workNode.Left.IsNil)
+                {
+                    workNode = workNode.Left;
+                }
+
+                workNode.Left = deleteNode.Left;
+                if (deleteNode.Right != workNode)
+                {
+                    workNode.Parent.Left = workNode.Right;
+                    workNode.Right = deleteNode.Right;
+                }
+                workNode.Parent = deleteNode.Parent;
+
+                if (workNode.IsRoot)
+                {
+                    Root = workNode;
+                }
+            }
+
+            // [работает] [при удалении 1]
+            // y.Right.Color = NodeColor.Red;
+            // var brother = y.Parent.Right;
+            // brother.Color = NodeColor.Black;
+            // y.Parent.Color = NodeColor.Black;
+            // brother.Right.Color = NodeColor.Black;
+            // RotateLeft(y.Parent);
+
+            // [работает] [при удалении 2]
+            // y.Left.Color = NodeColor.Red;
+            // var brother = y.Parent.Right;
+            // brother.Color = NodeColor.Black;
+            // y.Parent.Color = NodeColor.Black;
+            // brother.Right.Color = NodeColor.Black;
+            // RotateLeft(y.Parent);
+
+            // [работает] [при удалении 3]
+            // y.Left.Color = NodeColor.Red;
+            // var brother = y.Parent.Right;
+            // brother.Color = NodeColor.Black;
+            // y.Parent.Color = NodeColor.Black;
+            // brother.Right.Color = NodeColor.Black;
+            // RotateLeft(y.Parent);
+
+            // [работает] [при удалении 4]
+            workNode = workNode.Left;
+            // y.Left.Color = NodeColor.Red;
+            // var brother = y.Parent.Right;
+            // brother.Color = NodeColor.Black;
+            // y.Parent.Color = NodeColor.Black;
+            // brother.Right.Color = NodeColor.Black;
+            // RotateLeft(y.Parent);
+            
+            // [работает] [при удалении 6]
+            // y.Left.Color = NodeColor.Red; 
+            
+            // [работает] [при удалении 10]
+            // y.Left.Color = NodeColor.Red; 
+
+            // if (y.Color == NodeColor.Black)
+            // {
+            //     FixDeleting();
+            // }*/
+            return true;
+        }
+        
+        private void BalanceTreeAfterDelete(Node<T> linkedNode)
+        {
+            while (linkedNode != Root && linkedNode.Color == NodeColor.Black)
+            {
+                Node<T> workNode;
+                if (linkedNode == linkedNode.Parent.Left)
+                {
+                    workNode = linkedNode.Parent.Right;
+                    if (workNode.Color == NodeColor.Red)
+                    {
+                        linkedNode.Parent.Color = NodeColor.Red;
+                        workNode.Color = NodeColor.Black;
+                        RotateLeft(linkedNode.Parent);
+                        workNode = linkedNode.Parent.Right;
+                    }
+                    if (workNode.Left.Color == NodeColor.Black &&
+                        workNode.Right.Color == NodeColor.Black)
+                    {
+                        workNode.Color = NodeColor.Red;
+                        linkedNode = linkedNode.Parent;
+                    }
+                    else
+                    {
+                        if (workNode.Right.Color == NodeColor.Black)
+                        {
+                            workNode.Left.Color = NodeColor.Black;
+                            workNode.Color = NodeColor.Red;
+                            RotateRight(workNode);
+                            workNode = linkedNode.Parent.Right;
+                        }
+                        linkedNode.Parent.Color = NodeColor.Black;
+                        workNode.Color = linkedNode.Parent.Color;
+                        workNode.Right.Color = NodeColor.Black;
+                        RotateLeft(linkedNode.Parent);
+                        linkedNode = Root;
+                    }
+                }
+                else
+                {
+                    workNode = linkedNode.Parent.Left;
+                    if (workNode.Color == NodeColor.Red)
+                    {
+                        linkedNode.Parent.Color = NodeColor.Red;
+                        workNode.Color = NodeColor.Black;
+                        RotateRight(linkedNode.Parent);
+                        workNode = linkedNode.Parent.Left;
+                    }
+                    if (workNode.Right.Color == NodeColor.Black &&
+                        workNode.Left.Color == NodeColor.Black)
+                    {
+                        workNode.Color = NodeColor.Red;
+                        linkedNode = linkedNode.Parent;
+                    }
+                    else
+                    {
+                        if (workNode.Left.Color == NodeColor.Black)
+                        {
+                            workNode.Right.Color = NodeColor.Black;
+                            workNode.Color = NodeColor.Red;
+                            RotateLeft(workNode);
+                            workNode = linkedNode.Parent.Left;
+                        }
+                        workNode.Color = linkedNode.Parent.Color;
+                        linkedNode.Parent.Color = NodeColor.Black;
+                        workNode.Left.Color = NodeColor.Black;
+                        RotateRight(linkedNode.Parent);
+                        linkedNode = Root;
+                    }
+                }
+            }
+            linkedNode.Color = NodeColor.Black;
         }
 
         private void RefreshRootNode(T value)
@@ -163,7 +402,7 @@ namespace RBTree
         }
 
     #region Проверка свойств КЧ дерева
-        
+
         /// <summary>
         /// Каждый узел окрашен либо в красный, либо в черный цвет
         /// </summary>
@@ -225,7 +464,7 @@ namespace RBTree
                 {
                     continue;
                 }
-                
+
                 if (node.Color == NodeColor.Red)
                 {
                     node.CheckChildNodes();
@@ -239,7 +478,7 @@ namespace RBTree
                 }
 
                 node.CheckChildNodes();
-                
+
                 queue.Enqueue(node.Left);
                 queue.Enqueue(node.Right);
             }
@@ -253,7 +492,7 @@ namespace RBTree
         public bool IsTrueProperty5()
         {
             var blackHeight = -1;
-            
+
             var queue = new Queue<(Node<T>, int)>();
             queue.Enqueue((Root, 0));
 
@@ -266,7 +505,7 @@ namespace RBTree
                     {
                         blackHeight = height;
                     }
-                    
+
                     if (blackHeight == height)
                     {
                         continue;
@@ -281,7 +520,7 @@ namespace RBTree
                 {
                     height++;
                 }
-                
+
                 queue.Enqueue((node.Left, height));
                 queue.Enqueue((node.Right, height));
             }
@@ -292,13 +531,20 @@ namespace RBTree
         /// <summary>
         /// Проверка на то, что все свойства КЧ дерева соблюдаются
         /// </summary>
-        public bool IsTrueAllProperties()
+        public string IsTrueAllProperties()
         {
-            return IsTrueProperty1() &&
-                   IsTrueProperty2() &&
-                   IsTrueProperty3() &&
-                   IsTrueProperty4() &&
-                   IsTrueProperty5();
+            var prop1 = IsTrueProperty1();
+            var prop2 = IsTrueProperty2();
+            var prop3 = IsTrueProperty3();
+            var prop4 = IsTrueProperty4();
+            var prop5 = IsTrueProperty5();
+
+            return $"1: {prop1}\n" +
+                   $"2: {prop2}\n" +
+                   $"3: {prop3}\n" +
+                   $"4: {prop4}\n" +
+                   $"5: {prop5}\n" +
+                   $"Итог: {prop1 && prop2 && prop3 && prop4 && prop5}";
         }
 
     #endregion

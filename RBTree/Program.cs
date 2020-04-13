@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RBTree
 {
@@ -8,32 +10,61 @@ namespace RBTree
         
         public static void Main()
         {
-            WriteRandomRBTree();
-            
-            Console.ResetColor();
-            Console.Write("Нажмите любую кнопку для того, чтобы продолжить...");
-            Console.ReadKey();
+            ConsoleKeyInfo key;
+            do
+            {
+                Console.Clear();
+                WriteRandomRBTree();
+
+                Console.ResetColor();
+                Console.Write("Нажмите Enter для того, чтобы повторить и любую другую, чтобы выйти...");
+                key = Console.ReadKey();
+            }
+            while (key.Key == ConsoleKey.Enter);
         }
 
         private static void WriteRandomRBTree()
         {
-            const int minCount = 20;
-            const int maxCount = 30;
+            const int minCountAdd = 10;
+            const int maxCountAdd = 20;
+            
+            const int minCountRemove = 5;
+            const int maxCountRemove = 8;
 
             const int minNumber = -50;
             const int maxNumber = 50;
             
             var rand = new Random();
-            var count = rand.Next(minCount, maxCount + 1);
+            var countAdd = rand.Next(minCountAdd, maxCountAdd + 1);
+            var countRemove = rand.Next(minCountRemove, maxCountRemove + 1);
             var rbTree = new RBTree<int>();
+            
+            var numbers = new List<int>();
+            
+            var toAdd = new List<int>();
+            var toRemove = new List<int>();
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < countAdd; i++)
             {
-                rbTree.Add(rand.Next(minNumber, maxNumber + 1));
+                var number = rand.Next(minNumber, maxNumber + 1);
+                toAdd.Add(number);
+                numbers.Add(number);
+                rbTree.Add(number);
+            }
+
+            for (var i = 0; i < countRemove; i++)
+            {
+                var number = numbers[rand.Next(0, numbers.Count)];
+                toRemove.Add(number);
+                numbers.Remove(number);
+                rbTree.Remove(number);
             }
             
             WriteRBTree(rbTree);
             Console.WriteLine(rbTree.IsTrueAllProperties());
+            Console.WriteLine();
+            Console.WriteLine($"Add: {string.Join(",", toAdd)}");
+            Console.WriteLine($"Remove: {string.Join(",", toRemove)}");
         }
         
         private static void WriteRBTree<T>(RBTree<T> rbTree) where T : IComparable<T>
@@ -46,7 +77,7 @@ namespace RBTree
             Console.BufferHeight = Math.Max(paintModel.Height, Console.BufferHeight);
             Console.BufferWidth = Math.Max(paintModel.Width, Console.BufferWidth);
 
-            Console.WindowWidth = paintModel.Width;
+            Console.WindowWidth = Math.Min(170, Math.Max(paintModel.Width, Console.WindowWidth));
             
             for (var y = 0; y < paintModel.Height; y++)
             {
