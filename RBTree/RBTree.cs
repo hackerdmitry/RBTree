@@ -50,25 +50,29 @@ namespace RBTree
 
         private void RectifySituationRedParentAndRedUncle(Node<T> node)
         {
-            do
-            {
-                var grandParent = node.GrandParent;
+            var grandParent = node.GrandParent;
 
-                grandParent.ChangeColor();
-                grandParent.Left.ChangeColor();
-                grandParent.Right.ChangeColor();
+            grandParent.ChangeColor();
+            grandParent.Left.ChangeColor();
+            grandParent.Right.ChangeColor();
 
-                node = grandParent;
-            }
-            while (node.IsRedParentAndRedUncle());
+            SaveIntegrityRBTree(grandParent);
         }
 
         private void RectifySituationRedParentAndBlackUncle(Node<T> node)
         {
             var parent = node.Parent;
-            if (node.Disposition == DispositionNode.Right)
+            if (node.Disposition != parent.Disposition)
             {
-                RotateLeft(parent);
+                if (node.Disposition == DispositionNode.Right)
+                {
+                    RotateLeft(parent);
+                }
+                else
+                {
+                    RotateRight(parent);
+                }
+                
                 parent = node;
             }
 
@@ -217,6 +221,11 @@ namespace RBTree
             while (queue.Count > 0)
             {
                 var node = queue.Dequeue();
+                if (node.IsNil)
+                {
+                    continue;
+                }
+                
                 if (node.Color == NodeColor.Red)
                 {
                     node.CheckChildNodes();
@@ -230,6 +239,7 @@ namespace RBTree
                 }
 
                 node.CheckChildNodes();
+                
                 queue.Enqueue(node.Left);
                 queue.Enqueue(node.Right);
             }
@@ -266,8 +276,14 @@ namespace RBTree
                 }
 
                 node.CheckChildNodes();
-                queue.Enqueue((node.Left, height + 1));
-                queue.Enqueue((node.Right, height + 1));
+
+                if (node.Color == NodeColor.Black)
+                {
+                    height++;
+                }
+                
+                queue.Enqueue((node.Left, height));
+                queue.Enqueue((node.Right, height));
             }
 
             return true;

@@ -8,21 +8,32 @@ namespace RBTree
         
         public static void Main()
         {
-            var rbTree = new RBTree<int>(13);
-            rbTree.Add(1);
-            rbTree.Add(6);
-            rbTree.Add(8);
-            rbTree.Add(11);
-            rbTree.Add(15);
-            rbTree.Add(17);
-            rbTree.Add(22);
-            rbTree.Add(25);
-            rbTree.Add(27);
-            WriteRBTree(rbTree);
+            WriteRandomRBTree();
             
             Console.ResetColor();
             Console.Write("Нажмите любую кнопку для того, чтобы продолжить...");
             Console.ReadKey();
+        }
+
+        private static void WriteRandomRBTree()
+        {
+            const int minCount = 20;
+            const int maxCount = 30;
+
+            const int minNumber = -50;
+            const int maxNumber = 50;
+            
+            var rand = new Random();
+            var count = rand.Next(minCount, maxCount + 1);
+            var rbTree = new RBTree<int>();
+
+            for (var i = 0; i < count; i++)
+            {
+                rbTree.Add(rand.Next(minNumber, maxNumber + 1));
+            }
+            
+            WriteRBTree(rbTree);
+            Console.WriteLine(rbTree.IsTrueAllProperties());
         }
         
         private static void WriteRBTree<T>(RBTree<T> rbTree) where T : IComparable<T>
@@ -31,6 +42,11 @@ namespace RBTree
             
             var top = Console.CursorTop;
             var left = Console.CursorLeft;
+
+            Console.BufferHeight = Math.Max(paintModel.Height, Console.BufferHeight);
+            Console.BufferWidth = Math.Max(paintModel.Width, Console.BufferWidth);
+
+            Console.WindowWidth = paintModel.Width;
             
             for (var y = 0; y < paintModel.Height; y++)
             {

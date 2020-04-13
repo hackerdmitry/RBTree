@@ -26,24 +26,23 @@ namespace RBTree
                         _parent._right = this;
                     }
                 }
-                
             }
         }
-        
+
         public Node<T> Uncle
         {
             get
             {
-                var parent = Parent;
-                if (parent == null)
+                var grandParent = GrandParent;
+                if (grandParent == null)
                 {
                     return null;
                 }
 
-                parent.CheckChildNodes();
-                return Disposition == DispositionNode.Left
-                           ? parent.Right
-                           : parent.Left;
+                grandParent.CheckChildNodes();
+                return Parent.Disposition == DispositionNode.Left
+                           ? grandParent.Right
+                           : grandParent.Left;
             }
         }
         public Node<T> GrandParent => Parent?.Parent;

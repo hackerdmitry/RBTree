@@ -259,8 +259,16 @@ namespace RBTree
                 {
                     curNode = curNode.Left;
                     curHeight++;
+                    continue;
                 }
-                else if (!curNode.Right.IsNil && !visited.Contains(curNode.Right))
+                
+                if (!visited.Contains(curNode))
+                {
+                    yield return (curNode, curHeight);
+                    visited.Add(curNode);
+                }
+                
+                if (!curNode.Right.IsNil && !visited.Contains(curNode.Right))
                 {
                     curNode = curNode.Right;
                     curHeight++;
@@ -269,12 +277,6 @@ namespace RBTree
                 {
                     curNode = curNode.Parent;
                     curHeight--;
-                }
-                
-                if (!visited.Contains(curNode))
-                {
-                    yield return (curNode, curHeight);
-                    visited.Add(curNode);
                 }
             }
         }
